@@ -3,8 +3,8 @@ import SwiftUI
 struct DataBoxView: View {
     @State private var isExpanded: Bool = false
     @State private var isFormVisible: Bool = false
-    @State private var editClicked = false
     @State var dataBox: DataBox
+    @State private var showDeleteConfirmation = false
     
     var contentView: ContentView
     
@@ -26,7 +26,7 @@ struct DataBoxView: View {
                             // Show the pop-up when the edit button is clicked
                             print("show pop up change")
                             
-                            editClicked = true
+                            contentView.updateEditClicked(value: true)
                             ContentView.editDataBox = dataBox
                             contentView.updateShowPopup(value: true)
                         }) {
@@ -36,11 +36,29 @@ struct DataBoxView: View {
                         }
 
                         Button(action: {
-                            // Trash button action
+                            showDeleteConfirmation = true // Trigger the alert
                         }) {
                             Image(systemName: "trash.fill")
                                 .foregroundColor(.red)
                                 .font(.title2)
+                        }
+                        .alert("Are you sure you want to delete this credential?", isPresented: $showDeleteConfirmation) {
+                            Button("Cancel", role: .cancel) {
+                                // Dismiss alert without doing anything
+                                showDeleteConfirmation = false
+                            }
+                            Button("Delete", role: .destructive) {
+                                // Perform the delete operation
+                                FirebaseModel().deleteData(documentID: dataBox.id) { success in
+                                    if success {
+                                        contentView.updateDataBoxes()
+                                        print("Data successfully deleted!")
+                                    } else {
+                                        print("Failed to delete data.")
+                                    }
+                                }
+                                showDeleteConfirmation = false
+                            }
                         }
                     }
                     .padding(.trailing, 8)

@@ -22,6 +22,8 @@ class FirebaseModel {
     
     func fetchData(completion: @escaping ([DataBox]) -> Void) {
         
+        FirebaseModel.dataBoxes = []
+        
         FirebaseModel.db.collection(FirebaseModel.userEmail).getDocuments { snapshot, error in
             if let error = error {
                 print("Error fetching documents: \(error)")
@@ -46,6 +48,67 @@ class FirebaseModel {
                     FirebaseModel.dataBoxes.append(dataBox)
                 }
                 completion(FirebaseModel.dataBoxes)
+            }
+        }
+    }
+    
+    func updateData(dataBox: DataBox?, completion: @escaping (Bool) -> Void) {
+        print("inside FirebaseModel UpdateData(), editedDataBox: \(String(describing: dataBox))")
+        let documentID = dataBox?.id ?? ""
+        let updatedData: [String: Any] = [
+            "website or account name": dataBox?.topic ?? "",
+            "username or card No": dataBox?.UsernameOrCardNo ?? "",
+            "mail-id": dataBox?.mailId ?? "",
+            "password or PIN": dataBox?.passwordOrPin ?? "",
+            "additional details": dataBox?.additionalDetails ?? ""
+        ]
+        
+        FirebaseModel.db.collection(FirebaseModel.userEmail).document(documentID).setData(updatedData) { error in
+            if let error = error {
+                print("Error updating document: \(error)")
+                completion(false)
+            } else {
+                print("Document successfully updated!")
+                completion(true)
+            }
+        }
+    }
+    
+    func createData(dataBox: DataBox, completion: @escaping (Bool) -> Void) {
+        print("Inside FirebaseModel createData(), newDataBox: \(dataBox)")
+        
+        // Prepare the data to be added
+        let newData: [String: Any] = [
+            "website or account name": dataBox.topic,
+            "username or card No": dataBox.UsernameOrCardNo,
+            "mail-id": dataBox.mailId,
+            "password or PIN": dataBox.passwordOrPin,
+            "additional details": dataBox.additionalDetails
+        ]
+        
+        // Add a new document to the collection
+        FirebaseModel.db.collection(FirebaseModel.userEmail).addDocument(data: newData) { error in
+            if let error = error {
+                print("Error creating document: \(error)")
+                completion(false)
+            } else {
+                print("Document successfully created!")
+                completion(true)
+            }
+        }
+    }
+    
+    func deleteData(documentID: String, completion: @escaping (Bool) -> Void) {
+        print("Inside FirebaseModel deleteData(), documentID: \(documentID)")
+        
+        // Reference the document by its ID and delete it
+        FirebaseModel.db.collection(FirebaseModel.userEmail).document(documentID).delete { error in
+            if let error = error {
+                print("Error deleting document: \(error)")
+                completion(false)
+            } else {
+                print("Document successfully deleted!")
+                completion(true)
             }
         }
     }
@@ -88,10 +151,6 @@ class FirebaseModel {
             print(error.localizedDescription)
             return false;
         }
-    }
-    
-    func updateData(dataBox: DataBox){
-        
     }
     
     func getUserEmail() -> String {
